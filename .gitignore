@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Generated outputs (keep the processed DB optional — large)
+output/*.csv
+!output/.gitkeep
+
+# Scratch
+*.log
