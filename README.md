@@ -21,7 +21,7 @@ cap-priority-list/
 │   ├── 2022-23/
 │   ├── 2023-24/
 │   └── 2024-25/
-├── scorecards/                   # Put candidate scorecard PDFs here
+├── scorecards/                   # Local scorecard PDFs only (gitignored)
 ├── data/
 │   └── cutoffs_db.csv            # Parsed cutoff database (generated)
 ├── output/

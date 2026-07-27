@@ -12,5 +12,9 @@ venv/
 output/*.csv
 !output/.gitkeep
 
+# Candidate scorecards — never commit personal data
+scorecards/*
+!scorecards/.gitkeep
+
 # Scratch
 *.log
