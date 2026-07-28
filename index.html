@@ -5,18 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CAP Priority List</title>
   <style>
+    /* Windows 10 Start-style tile board — no external CSS/JS */
     :root {
-      --desk: #f3f6fa;
-      --desk-2: #e8eef6;
-      --ink: #1b2430;
-      --muted: #5c6b7a;
-      --tile-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 6px 18px rgba(27, 36, 48, 0.08);
-      --gap: 0.65rem;
-      --unit: 8.5rem;
+      --bg0: #0c0c0c;
+      --bg1: #1a1a1a;
+      --ink: #ffffff;
+      --muted: #a6a6a6;
+      --gap: 14px;
+      --unit: 7.5rem;
       --cols: 8;
       --font: "Segoe UI", "Segoe UI Variable", Tahoma, Geneva, sans-serif;
       --mono: Consolas, "Courier New", monospace;
       --shell-pad: 2rem;
+      --accent: #60cdff;
     }
 
     * { box-sizing: border-box; }
@@ -27,57 +28,59 @@
       min-height: 100vh;
       color: var(--ink);
       font-family: var(--font);
-      font-size: 18px;
-      line-height: 1.5;
+      font-size: 16px;
+      line-height: 1.45;
       background:
-        radial-gradient(1000px 600px at 10% 0%, #dff3f0 0%, transparent 55%),
-        radial-gradient(900px 500px at 95% 10%, #dceaf8 0%, transparent 50%),
-        linear-gradient(165deg, #f7f9fc 0%, var(--desk) 40%, var(--desk-2) 100%);
+        radial-gradient(1200px 700px at 20% 0%, #243040 0%, transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, #1e3338 0%, transparent 50%),
+        linear-gradient(160deg, #141618 0%, #121416 40%, #181a1c 100%);
+      background-attachment: fixed;
     }
 
     .shell {
-      width: min(1180px, calc(100% - var(--shell-pad)));
+      width: min(1120px, calc(100% - var(--shell-pad)));
       margin: 0 auto;
-      padding: 1.4rem 0 3.5rem;
+      padding: 2rem 0 3.5rem;
     }
 
-    .topbar {
+    .repo-banner {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 0.75rem 1.25rem;
-      margin-bottom: 1.75rem;
-      padding: 0.85rem 1rem;
-      background: rgba(255, 255, 255, 0.78);
-      border: 1px solid rgba(27, 36, 48, 0.08);
-      box-shadow: 0 4px 14px rgba(27, 36, 48, 0.05);
+      gap: 0.65rem 1.25rem;
+      margin-bottom: var(--gap);
+      padding: 0.85rem 1.1rem;
+      border: 1px solid #7dd3fc;
+      border-radius: 2px;
+      box-shadow:
+        0 0 0 1px rgba(125, 211, 252, 0.2),
+        0 0 16px rgba(125, 211, 252, 0.35),
+        inset 0 0 12px rgba(125, 211, 252, 0.06);
+      background: transparent;
     }
 
-    .topbar .repo-label {
-      font-size: 0.95rem;
-      color: var(--muted);
+    .repo-banner .label {
       margin: 0;
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.75);
     }
 
-    .topbar .repo-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      font-size: 1.05rem;
-      font-weight: 650;
-      color: #0078d4;
+    .repo-banner a {
+      color: #7dd3fc;
+      font-size: clamp(0.95rem, 2vw, 1.05rem);
+      font-weight: 600;
       text-decoration: none;
+      text-shadow: 0 0 10px rgba(125, 211, 252, 0.45);
       word-break: break-all;
     }
 
-    .topbar .repo-link:hover { text-decoration: underline; }
-
-    .topbar .repo-link::before {
-      content: "⌘";
-      font-size: 1rem;
-      opacity: 0.7;
-      flex-shrink: 0;
+    .repo-banner a:hover {
+      color: #fff;
+      text-shadow: 0 0 14px rgba(125, 211, 252, 0.7);
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
 
     .tiles {
@@ -86,6 +89,27 @@
       grid-auto-rows: minmax(var(--unit), auto);
       gap: var(--gap);
       align-items: stretch;
+      margin-bottom: calc(var(--gap) * 1.5);
+    }
+
+    .tiles:last-child {
+      margin-bottom: 0;
+    }
+
+    .tile .section {
+      font-size: clamp(1.35rem, 3vw, 1.75rem);
+      font-weight: 650;
+      margin: 0 0 0.85rem;
+      padding-bottom: 0.65rem;
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+    }
+
+    details.tile.dropdown .drop-head .section {
+      margin-bottom: 0.35rem;
+      padding-bottom: 0.5rem;
     }
 
     .tile {
@@ -93,63 +117,61 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      gap: 0.65rem;
-      padding: 1.1rem 1.15rem 0.95rem;
-      color: var(--ink);
+      gap: 0.55rem;
+      padding: 1.35rem 1.4rem 1.2rem;
+      color: #fff;
       text-decoration: none;
-      overflow: visible;
-      border: 1px solid rgba(27, 36, 48, 0.06);
-      box-shadow: var(--tile-shadow);
-      transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+      transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
       min-width: 0;
-      min-height: 0;
       height: 100%;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 0 12px rgba(255, 255, 255, 0.06);
     }
 
     .tile:hover {
-      transform: scale(1.015);
-      filter: brightness(1.03);
-      box-shadow: 0 10px 28px rgba(27, 36, 48, 0.12);
+      filter: brightness(1.06);
+      transform: scale(1.01);
       z-index: 2;
     }
 
     .tile:focus-visible {
-      outline: 3px solid #0078d4;
-      outline-offset: 2px;
+      outline: 2px solid #fff;
+      outline-offset: 3px;
     }
 
     .tile .title {
-      font-size: clamp(1.15rem, 2.4vw, 1.35rem);
-      font-weight: 650;
-      margin: 0;
-      letter-spacing: -0.01em;
+      font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+      font-weight: 600;
+      margin: 0 0 0.15rem;
+      line-height: 1.2;
+      color: #fff;
     }
 
     .tile .body {
-      margin: 0.2rem 0 0;
-      font-size: clamp(0.98rem, 2.1vw, 1.08rem);
+      margin: 0.35rem 0 0;
+      font-size: clamp(0.9rem, 1.9vw, 0.98rem);
       line-height: 1.45;
-      color: rgba(27, 36, 48, 0.88);
+      color: rgba(255, 255, 255, 0.92);
     }
 
     .tile .meta {
-      font-family: var(--mono);
-      font-size: clamp(0.82rem, 1.8vw, 0.9rem);
-      color: var(--muted);
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.78);
       margin-top: auto;
-      padding-top: 0.35rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
     }
 
     .tile .glyph {
-      font-size: clamp(1.6rem, 3vw, 2rem);
+      font-size: clamp(1.4rem, 2.6vw, 1.75rem);
       font-weight: 200;
       line-height: 1;
-      opacity: 0.85;
-      margin-bottom: 0.35rem;
-      color: rgba(27, 36, 48, 0.55);
+      margin-bottom: 0.25rem;
+      color: rgba(255, 255, 255, 0.95);
     }
 
-    /* Desktop spans (8-col) */
     .t1x1 { grid-column: span 1; grid-row: span 1; }
     .t2x1 { grid-column: span 2; grid-row: span 1; }
     .t2x2 { grid-column: span 2; grid-row: span 2; }
@@ -159,19 +181,87 @@
     .t8x2 { grid-column: span 8; grid-row: span 2; }
     .t8x3 { grid-column: span 8; grid-row: span 3; }
 
-    .c-teal   { background: #d7f3ef; }
-    .c-blue   { background: #d6ebfb; }
-    .c-indigo { background: #ebe0f4; }
-    .c-orange { background: #fde4d4; }
-    .c-red    { background: #fbd9de; }
-    .c-green  { background: #def0d8; }
-    .c-cyan   { background: #d5f1f7; }
-    .c-slate  { background: #e4e9ef; }
-    .c-navy   { background: #d9e4f5; }
-    .c-amber  { background: #ffefd0; }
-    .c-pink   { background: #f7dff3; }
-    .c-steel  { background: #e2e8ee; }
-    .c-warn   { background: #fff3cd; }
+    /* Calmer muted tiles + neon borders */
+    .c-teal {
+      background: #3d6f6a;
+      border-color: #5eead4;
+      box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.25), 0 0 14px rgba(94, 234, 212, 0.35);
+    }
+    .c-blue {
+      background: #3d6e99;
+      border-color: #7dd3fc;
+      box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.25), 0 0 14px rgba(125, 211, 252, 0.35);
+    }
+    .c-indigo {
+      background: #6b5b8a;
+      border-color: #c4b5fd;
+      box-shadow: 0 0 0 1px rgba(196, 181, 253, 0.25), 0 0 14px rgba(196, 181, 253, 0.35);
+    }
+    .c-orange {
+      background: #9a6540;
+      border-color: #fdba74;
+      box-shadow: 0 0 0 1px rgba(253, 186, 116, 0.25), 0 0 14px rgba(253, 186, 116, 0.35);
+    }
+    .c-red {
+      background: #8f4a55;
+      border-color: #fda4af;
+      box-shadow: 0 0 0 1px rgba(253, 164, 175, 0.25), 0 0 14px rgba(253, 164, 175, 0.35);
+    }
+    .c-green {
+      background: #4a7348;
+      border-color: #86efac;
+      box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.25), 0 0 14px rgba(134, 239, 172, 0.35);
+    }
+    .c-cyan {
+      background: #3d7a88;
+      border-color: #67e8f9;
+      box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.25), 0 0 14px rgba(103, 232, 249, 0.35);
+    }
+    .c-slate {
+      background: #5a635c;
+      border-color: #cbd5e1;
+      box-shadow: 0 0 0 1px rgba(203, 213, 225, 0.2), 0 0 14px rgba(203, 213, 225, 0.28);
+    }
+    .c-navy {
+      background: #42587a;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.25), 0 0 14px rgba(147, 197, 253, 0.35);
+    }
+    .c-amber {
+      background: #a07a3a;
+      border-color: #fcd34d;
+      box-shadow: 0 0 0 1px rgba(252, 211, 77, 0.25), 0 0 14px rgba(252, 211, 77, 0.35);
+    }
+    .c-pink {
+      background: #7d5678;
+      border-color: #f0abfc;
+      box-shadow: 0 0 0 1px rgba(240, 171, 252, 0.25), 0 0 14px rgba(240, 171, 252, 0.35);
+    }
+    .c-steel {
+      background: #5a6b5e;
+      border-color: #a7f3d0;
+      box-shadow: 0 0 0 1px rgba(167, 243, 208, 0.22), 0 0 14px rgba(167, 243, 208, 0.3);
+    }
+    .c-warn {
+      background: #6a6662;
+      border-color: #e7e5e4;
+      box-shadow: 0 0 0 1px rgba(231, 229, 228, 0.2), 0 0 14px rgba(231, 229, 228, 0.28);
+    }
+
+    .c-teal:hover   { box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.45), 0 0 22px rgba(94, 234, 212, 0.55); }
+    .c-blue:hover   { box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.45), 0 0 22px rgba(125, 211, 252, 0.55); }
+    .c-indigo:hover { box-shadow: 0 0 0 1px rgba(196, 181, 253, 0.45), 0 0 22px rgba(196, 181, 253, 0.55); }
+    .c-orange:hover { box-shadow: 0 0 0 1px rgba(253, 186, 116, 0.45), 0 0 22px rgba(253, 186, 116, 0.55); }
+    .c-red:hover    { box-shadow: 0 0 0 1px rgba(253, 164, 175, 0.45), 0 0 22px rgba(253, 164, 175, 0.55); }
+    .c-green:hover  { box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.45), 0 0 22px rgba(134, 239, 172, 0.55); }
+    .c-cyan:hover   { box-shadow: 0 0 0 1px rgba(103, 232, 249, 0.45), 0 0 22px rgba(103, 232, 249, 0.55); }
+    .c-slate:hover  { box-shadow: 0 0 0 1px rgba(203, 213, 225, 0.4), 0 0 22px rgba(203, 213, 225, 0.45); }
+    .c-navy:hover   { box-shadow: 0 0 0 1px rgba(147, 197, 253, 0.45), 0 0 22px rgba(147, 197, 253, 0.55); }
+    .c-amber:hover  { box-shadow: 0 0 0 1px rgba(252, 211, 77, 0.45), 0 0 22px rgba(252, 211, 77, 0.55); }
+    .c-pink:hover   { box-shadow: 0 0 0 1px rgba(240, 171, 252, 0.45), 0 0 22px rgba(240, 171, 252, 0.55); }
+    .c-steel:hover  { box-shadow: 0 0 0 1px rgba(167, 243, 208, 0.4), 0 0 22px rgba(167, 243, 208, 0.5); }
+    .c-warn:hover   { box-shadow: 0 0 0 1px rgba(231, 229, 228, 0.4), 0 0 22px rgba(231, 229, 228, 0.45); }
+
 
     .tile.wide-copy .body { max-width: none; }
 
@@ -179,30 +269,33 @@
     .tile .codeblock {
       margin: 0.45rem 0 0;
       padding: 0.7rem 0.8rem;
-      background: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(27, 36, 48, 0.08);
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-left: 3px solid rgba(255, 255, 255, 0.55);
       font-family: var(--mono);
-      font-size: clamp(0.85rem, 1.9vw, 0.95rem);
+      font-size: clamp(0.8rem, 1.7vw, 0.88rem);
       line-height: 1.5;
       overflow-x: auto;
       white-space: pre-wrap;
       word-break: break-word;
-      color: #1b2430;
+      color: #f3f3f3;
       max-width: 100%;
     }
 
     .tile ul {
       margin: 0.35rem 0 0;
-      padding-left: 1.2rem;
-      font-size: clamp(0.98rem, 2.1vw, 1.05rem);
+      padding-left: 1.1rem;
+      font-size: clamp(0.9rem, 1.9vw, 0.98rem);
+      color: rgba(255, 255, 255, 0.94);
     }
 
-    .tile li { margin: 0.35rem 0; }
+    .tile li { margin: 0.32rem 0; }
 
     .tile ol.assumptions {
       margin: 0.45rem 0 0;
-      padding-left: 1.35rem;
-      font-size: clamp(0.98rem, 2.1vw, 1.05rem);
+      padding-left: 1.25rem;
+      font-size: clamp(0.9rem, 1.9vw, 0.98rem);
+      color: rgba(255, 255, 255, 0.94);
     }
 
     .tile ol.assumptions li {
@@ -211,113 +304,147 @@
     }
 
     .tile ol.assumptions strong {
-      color: var(--ink);
+      font-weight: 700;
+      color: #fff;
     }
 
-    .group {
-      margin-top: 2.2rem;
-      margin-bottom: 0.85rem;
-      font-size: clamp(1rem, 2.2vw, 1.15rem);
-      font-weight: 600;
-      color: var(--muted);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+    /* Dropdown tile (pure HTML <details>, no JS) */
+    details.tile.dropdown {
+      display: block;
+      height: auto;
+      cursor: default;
+      overflow: visible;
     }
 
-    .group:first-of-type { margin-top: 0; }
+    details.tile.dropdown > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.25rem 0;
+    }
 
-    footer {
-      margin-top: 2.2rem;
-      color: var(--muted);
-      font-size: 0.95rem;
+    details.tile.dropdown > summary::-webkit-details-marker { display: none; }
+    details.tile.dropdown > summary::marker { content: ""; }
+
+    details.tile.dropdown .drop-head {
+      min-width: 0;
+      flex: 1;
+    }
+
+    details.tile.dropdown .drop-head .title {
+      margin: 0;
+    }
+
+    details.tile.dropdown .drop-hint {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    details.tile.dropdown .chevron {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      display: grid;
+      place-items: center;
+      font-size: 1.1rem;
+      font-weight: 300;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    details.tile.dropdown .chevron::before {
+      content: "▾";
+    }
+
+    details.tile.dropdown[open] .chevron {
+      transform: rotate(-180deg);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    details.tile.dropdown .drop-body {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    details.tile.dropdown > summary:hover .chevron {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .tile code {
       font-family: var(--mono);
+      font-size: 0.88em;
+      background: rgba(0, 0, 0, 0.25);
+      color: #fff;
+      padding: 0.05rem 0.28rem;
     }
 
-    /* Tablet */
+    .tile .body .meta {
+      display: inline;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.9em;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
     @media (max-width: 980px) {
-      :root {
-        --cols: 4;
-        --unit: 7.2rem;
-        --shell-pad: 1.5rem;
-      }
-
-      body { font-size: 17px; }
-
+      :root { --cols: 4; --unit: 6.8rem; --shell-pad: 1.4rem; }
       .t1x1, .t2x1 { grid-column: span 2; grid-row: span 1; }
       .t2x2 { grid-column: span 2; grid-row: span 2; }
-      .t4x1, .t4x2, .t8x1, .t8x2, .t8x3 {
-        grid-column: span 4;
-      }
+      .t4x1, .t4x2, .t8x1, .t8x2, .t8x3 { grid-column: span 4; }
       .t4x2, .t8x2 { grid-row: span 2; }
       .t8x3 { grid-row: span 3; }
     }
 
-    /* Large phone */
     @media (max-width: 640px) {
-      :root {
-        --cols: 2;
-        --unit: auto;
-        --gap: 0.55rem;
-        --shell-pad: 1.1rem;
-      }
-
-      body { font-size: 16px; }
-
-      .tiles {
-        grid-auto-rows: auto;
-      }
-
+      :root { --cols: 2; --unit: auto; --shell-pad: 1rem; --gap: 12px; }
+      body { font-size: 15.5px; }
+      .tiles { grid-auto-rows: auto; }
       .t1x1, .t2x1, .t2x2, .t4x1, .t4x2, .t8x1, .t8x2, .t8x3 {
         grid-column: span 2;
         grid-row: span 1;
       }
-
-      .tile {
-        padding: 1rem 1rem 0.9rem;
-      }
-
-      .tile:hover {
-        transform: none;
-      }
-
-      .topbar {
+      .tile:hover { transform: none; }
+      .repo-banner {
         flex-direction: column;
         align-items: flex-start;
       }
     }
 
-    /* Small phone */
     @media (max-width: 400px) {
-      :root { --shell-pad: 0.85rem; }
-      body { font-size: 15.5px; }
-      .tile ul,
-      .tile ol.assumptions { padding-left: 1.05rem; }
+      :root { --shell-pad: 0.8rem; }
+      .tile ul, .tile ol.assumptions { padding-left: 1rem; }
     }
 
     @media (hover: none) {
       .tile:hover {
         transform: none;
         filter: none;
-        box-shadow: var(--tile-shadow);
+        outline-color: transparent;
       }
     }
   </style>
 </head>
 <body>
   <div class="shell">
-    <header class="topbar">
-      <p class="repo-label">Project repository</p>
-      <a class="repo-link" href="https://github.com/ninadrathod/cap-priority-list">
+    <div class="repo-banner">
+      <p class="label">Project repository</p>
+      <a href="https://github.com/ninadrathod/cap-priority-list">
         https://github.com/ninadrathod/cap-priority-list
       </a>
-    </header>
+    </div>
 
-    <p class="group">CAP Priority List</p>
     <div class="tiles">
       <a class="tile t8x2 c-teal" href="#assumptions">
         <div>
-          <div class="glyph">▣</div>
-          <h2 class="title">CAP Priority List</h2>
+          <p class="section">CAP Priority List</p>
           <p class="body wide-copy">
             A practical helper for <strong>Maharashtra CAP engineering admissions</strong>.
             Filling the option form means ranking dozens of college–branch pairs under
@@ -373,10 +500,16 @@
       </a>
     </div>
 
-    <p class="group" id="database">How the database is generated</p>
     <div class="tiles">
-      <div class="tile t8x2 c-cyan wide-copy">
-        <div>
+      <details class="tile t8x1 c-cyan wide-copy dropdown" id="database">
+        <summary>
+          <div class="drop-head">
+            <p class="section">How the database is generated</p>
+            <span class="drop-hint">Cutoff PDFs → data/cutoffs_db.csv · click to expand</span>
+          </div>
+          <span class="chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="drop-body">
           <h2 class="title">Cutoff database: <code>data/cutoffs_db.csv</code></h2>
           <p class="body">
             Recommendations do not read CAP PDFs at runtime. First, a one-time (or rare)
@@ -407,16 +540,21 @@
           </ol>
           <div class="codeblock">python scripts/parse_cutoffs.py
 # → data/cutoffs_db.csv  (~187k rows from 9 CAP PDFs)</div>
+          <div class="meta">scripts/parse_cutoffs.py · raw/*/Cutoffs/*.pdf</div>
         </div>
-        <div class="meta">scripts/parse_cutoffs.py · raw/*/Cutoffs/*.pdf</div>
-      </div>
+      </details>
     </div>
 
-    <p class="group" id="assumptions">Assumptions</p>
     <div class="tiles">
-      <div class="tile t8x3 c-warn wide-copy">
-        <div>
-          <h2 class="title">What this tool assumes</h2>
+      <details class="tile t8x1 c-warn wide-copy dropdown" id="assumptions">
+        <summary>
+          <div class="drop-head">
+            <p class="section">Assumptions</p>
+            <span class="drop-hint">What this tool assumes · click to expand · 16 modeling choices · planning aid, not a guarantee</span>
+          </div>
+          <span class="chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="drop-body">
           <p class="body">
             These are deliberate modeling choices. The shortlist is a planning aid,
             not an allotment prediction.
@@ -506,15 +644,15 @@
               stays useful as real preferences.
             </li>
           </ol>
+          <div class="meta">read these before treating the CSV as final preferences</div>
         </div>
-        <div class="meta">read these before treating the CSV as final preferences</div>
-      </div>
+      </details>
     </div>
 
-    <p class="group" id="logic">Recommendation logic</p>
-    <div class="tiles">
+    <div class="tiles" id="logic">
       <div class="tile t4x2 c-blue wide-copy">
         <div>
+          <p class="section">Recommendation logic</p>
           <h2 class="title">How matching works</h2>
           <p class="body">
             Per <strong>choice code</strong> (college–branch), each year×round keeps the
@@ -589,10 +727,10 @@ difficulty =
       </div>
     </div>
 
-    <p class="group">Bucket rules</p>
     <div class="tiles">
       <div class="tile t4x2 c-indigo wide-copy">
         <div>
+          <p class="section">Bucket rules</p>
           <h2 class="title">Merit-mode thresholds</h2>
           <ul>
             <li><strong>Safe:</strong> CAP1 clear ≥ 67% and median gap ≥ +3,000</li>
@@ -616,10 +754,10 @@ difficulty =
       </div>
     </div>
 
-    <p class="group">Run</p>
     <div class="tiles">
       <div class="tile t8x2 c-navy wide-copy">
         <div>
+          <p class="section">Run</p>
           <h2 class="title">Command line</h2>
           <pre>pip install -r requirements.txt
 python scripts/parse_cutoffs.py
@@ -657,10 +795,6 @@ python generate_recommendations.py scorecards/scorecard.pdf --streams 1,2</pre>
         </div>
       </div>
     </div>
-
-    <footer>
-      tiles · self-contained HTML · no external CSS/JS
-    </footer>
   </div>
 </body>
 </html>
