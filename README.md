@@ -1,147 +1,178 @@
 # CAP Priority List
 
-Generate a Maharashtra CAP engineering admission preference shortlist from an MHT-CET scorecard, using historical category-wise cutoffs.
+Build a **Maharashtra CAP engineering preference list** from your MHT-CET results and historical CAP cutoffs.
 
-Given a candidate's scorecard PDF, the tool:
+You give the tool your Final Merit Status (or scorecard). It returns a CSV of college–branch options in three buckets: **aspirational**, **moderate**, and **safe** (~100 choices by default).
 
-1. Reads **category**, **percentile**, and **gender** (for female `L*` seats)
-2. Matches against 3 years of CAP Round 1–3 cutoffs
-3. Writes a curated CSV of **aspirational / moderate / safe** college–branch options
+**Repository:** [github.com/ninadrathod/cap-priority-list](https://github.com/ninadrathod/cap-priority-list)
 
----
-
-## Directory layout
-
-```text
-cap-priority-list/
-├── generate_recommendations.py   # Main CLI
-├── requirements.txt
-├── README.md
-├── raw/                          # Historical cutoff + seat-matrix PDFs
-│   ├── 2022-23/
-│   ├── 2023-24/
-│   └── 2024-25/
-├── scorecards/                   # Local scorecard PDFs only (gitignored)
-├── data/
-│   └── cutoffs_db.csv            # Parsed cutoff database (generated)
-├── output/
-│   └── recommendations.csv       # Recommendation CSV (generated)
-└── scripts/
-    ├── parse_cutoffs.py          # One-time PDF → database builder
-    └── branch_categories.py      # Branch → stream mapping
-```
+**How it works (GitHub Pages):** open [`index.html`](./index.html) in this repo, or enable Pages on the `main` branch (root) so the same page is served publicly.
 
 ---
 
-## Setup
+## Quick start
+
+### 1. Clone and create a virtual environment
 
 ```bash
+git clone https://github.com/ninadrathod/cap-priority-list.git
+cd cap-priority-list
+
+python3 -m venv .venv
+source .venv/bin/activate          # macOS / Linux
+# .venv\Scripts\activate           # Windows
+
 pip install -r requirements.txt
 ```
 
-Build the cutoff database once (or again after adding new year PDFs under `raw/`):
+Later sessions: `cd` into the project and run `source .venv/bin/activate` again before using the scripts.
+
+### 2. Build the cutoff database (once)
+
+Historical CAP PDFs already live under `raw/`. Parse them into a CSV database:
 
 ```bash
 python scripts/parse_cutoffs.py
 ```
 
-This writes `data/cutoffs_db.csv`.
+This creates `data/cutoffs_db.csv`. Re-run only when you add new cutoff years.
 
----
+### 3. Add your candidate file
 
-## Branch streams
+**Best option — Final Merit Status**
 
-Branches are grouped into five streams:
+1. Open your merit status on the CET site
+2. Save the page as `.mht` / `.mhtml` (Chrome: “Webpage, Complete”)
+3. Put it in this folder (or anywhere you like)
 
-| # | Stream | Examples |
-|---|--------|----------|
-| 1 | Computer Science & IT | CSE, IT, AI/ML, Data Science, Cyber Security, IoT |
-| 2 | Electronics & Communication | EXTC, ECE, VLSI, Instrumentation, 5G |
-| 3 | Electrical Engineering | Electrical, Electrical & Power |
-| 4 | Mechanical Engineering | Mechanical, Automobile, Mechatronics, Production, Robotics & Automation |
-| 5 | Civil Engineering | Civil, Structural, Environmental Civil |
+**Or — CET scorecard PDF**
 
-Specialized branches (Chemical, Textile, Food, etc.) are excluded unless you add them later.
+Place it under `scorecards/` (that folder is gitignored so personal files stay local).
 
-When you run the tool **without** `--streams`, it asks interactively which streams to use.
+### 4. Generate recommendations
 
 ```bash
-# Interactive prompt for streams
-python generate_recommendations.py scorecards/your_scorecard.pdf
+# Merit status (preferred — uses State General Merit No)
+python generate_recommendations.py "Your Name.mht" --streams all
 
-# Or pass streams non-interactively
-python generate_recommendations.py scorecards/your_scorecard.pdf --streams 1,2
-python generate_recommendations.py scorecards/your_scorecard.pdf --streams cs,electronics
+# Scorecard PDF (percentile matching)
 python generate_recommendations.py scorecards/your_scorecard.pdf --streams all
 ```
 
-## Usage
+Open `output/recommendations.csv` in Excel / Google Sheets.
 
-Place the candidate MHT-CET scorecard PDF in `scorecards/`, then run:
+---
+
+## Choosing branches (streams)
+
+| # | Stream | Typical courses |
+|---|--------|-----------------|
+| 1 | Computer Science & IT | CSE, IT, AI/ML, Data Science, IoT |
+| 2 | Electronics & Communication | EXTC, ECE, Instrumentation |
+| 3 | Electrical Engineering | Electrical, Electrical & Power |
+| 4 | Mechanical Engineering | Mechanical, Auto, Mechatronics, Robotics |
+| 5 | Civil Engineering | Civil, Structural |
 
 ```bash
-python generate_recommendations.py scorecards/your_scorecard.pdf
+# All five streams
+python generate_recommendations.py candidate.mht --streams all
+
+# Only CS + Electronics
+python generate_recommendations.py candidate.mht --streams 1,2
+python generate_recommendations.py candidate.mht --streams cs,electronics
+
+# Interactive prompt (no --streams)
+python generate_recommendations.py candidate.mht
 ```
 
-Default output: `output/recommendations.csv`
+---
 
-### Options
+## Useful options
 
 ```bash
-python generate_recommendations.py scorecards/your_scorecard.pdf \
+python generate_recommendations.py candidate.mht \
+  --streams all \
   -o output/recommendations.csv \
-  --streams 1,2 \
   --aspirational 30 \
   --moderate 40 \
-  --safe 30 \
-  --female
+  --safe 30
 ```
 
-| Flag | Meaning |
-|------|---------|
-| `-o` / `--output` | Output CSV path |
-| `--db` | Path to cutoff database (default `data/cutoffs_db.csv`) |
-| `--streams` | Branch streams to include (`1,2`, `cs,mechanical`, or `all`). If omitted, prompts interactively |
-| `--aspirational` | Max aspirational rows (default 30) |
-| `--moderate` | Max moderate rows (default 40) |
-| `--safe` | Max safe rows (default 30) |
-| `--female` / `--male` | Override gender detection from the scorecard |
-
-### Output CSV columns
-
-| Column | Description |
-|--------|-------------|
-| `priority` | Preference order (1 = highest) |
-| `bucket` | `aspirational`, `moderate`, or `safe` |
-| `stream` | Selected branch stream label |
-| `college` | Institute name |
-| `branch` | Course name |
-| `choice_code` | CAP choice code |
-| `college_type` | Government / Government-Aided / University / Private |
-| `median_closing_percentile` | Typical historical closing percentile |
-| `min_closing_percentile` | Easiest historical closing percentile |
-| `difficulty_score` | Weighted competitiveness score |
-| `clear_rate` | Share of past rounds the candidate would have cleared |
-| `candidate_*` | Parsed scorecard fields |
-
-Multiple streams from the same college can appear in the list.
+| Flag | What it does |
+|------|----------------|
+| `-o` | Output CSV path |
+| `--streams` | `all`, `1,2`, or names like `cs,mechanical` |
+| `--aspirational` / `--moderate` / `--safe` | How many rows per bucket (default 30 / 40 / 30) |
+| `--female` / `--male` | Force gender if auto-detect is wrong |
+| `--db` | Alternate cutoff database path |
 
 ---
 
-## How recommendations work
+## What the CSV means
 
-- Eligible seats: candidate **category** (e.g. DT/VJ → `GVJ*`) plus **OPEN** (`GOPEN*`)
-- Female candidates also get **Ladies** seats (`L*`); male candidates do not
-- Only branches in the **selected streams** are considered
-- Home University is **not** applied yet (H/O/S seats are pooled)
-- Only Stage-I cutoffs with a realistic chance are kept
-- A shortlist of ~100 options is curated across the three buckets (30 / 40 / 30)
-- Government, government-aided, and university colleges are preferred when they qualify
+| Column | Meaning |
+|--------|---------|
+| `priority` | Suggested order (1 = try first) |
+| `bucket` | `aspirational` / `moderate` / `safe` |
+| `college` / `branch` / `choice_code` | CAP option |
+| `college_type` | Government, Government-Aided, University, or Private |
+| `median_closing_merit` | Typical historical closing State Merit (when available) |
+| `clear_rate` | Share of past rounds you would likely have cleared |
+| `candidate_*` | Your parsed details (for reference) |
+
+Government / aided / university colleges are preferred in the shortlist when they qualify.
 
 ---
 
-## Adding new cutoff years
+## How matching works (short version)
 
-1. Add a folder under `raw/`, e.g. `raw/2025-26/Cutoffs/`
-2. Put CAP1/CAP2/CAP3 cutoff PDFs there (names containing `CAP1`, `CAP2`, `CAP3`)
-3. Re-run `python scripts/parse_cutoffs.py`
+1. **Category + gender** decide which seats you can take  
+   - Your category seats + OPEN  
+   - Female candidates also get Ladies (`L*`) seats  
+2. **Merit file** → match on **State General Merit No** vs CAP closing ranks (lower rank = better)  
+3. **Scorecard only** → match on **percentile**  
+4. Options are scored across 3 years × CAP1–3, then bucketed and shortlisted  
+
+Home University is stored from the merit page but **not applied yet** (H/O/S seats are pooled).
+
+For a visual walkthrough of the logic, open [`index.html`](./index.html).
+
+---
+
+## Project layout
+
+```text
+cap-priority-list/
+├── index.html                    # Project page (GitHub Pages)
+├── generate_recommendations.py   # Main command
+├── requirements.txt
+├── raw/                          # Historical CAP cutoff PDFs
+├── input/                        # Your merit/scorecard files (gitignored)
+├── data/cutoffs_db.csv           # Parsed cutoff DB (after step 2)
+├── scorecards/                   # Optional alternate for PDFs (gitignored)
+├── output/                       # Generated CSV (gitignored)
+└── scripts/
+    ├── parse_cutoffs.py
+    └── branch_categories.py
+```
+
+Personal files (`input/*`, `scorecards/*`, `*.mht`, `output/*`) are gitignored — do not commit them.
+
+---
+
+## Adding a new cutoff year
+
+1. Create `raw/2025-26/Cutoffs/`
+2. Add CAP1 / CAP2 / CAP3 PDFs (filenames should contain `CAP1`, `CAP2`, `CAP3`)
+3. Run `python scripts/parse_cutoffs.py` again
+
+---
+
+## Publish the project page (GitHub Pages)
+
+1. Push this repo to GitHub  
+2. **Settings → Pages → Build and deployment**  
+3. Source: **Deploy from a branch**  
+4. Branch: `main` (or `master`), folder: `/ (root)`  
+5. Save — the site will serve `index.html` at  
+   `https://ninadrathod.github.io/cap-priority-list/`

@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """
-Generate a CAP college-branch priority shortlist from an MHT-CET scorecard.
+Generate a CAP college-branch priority shortlist from a candidate profile.
+
+Accepts either:
+  - MHT-CET scorecard PDF (percentile-based matching), or
+  - CET Final Merit Status page saved as .mht / .mhtml / .html
+    (State General Merit No used for matching — preferred when available)
 
 Example:
-  python generate_recommendations.py scorecards/scorecard.pdf -o output/recommendations.csv
+  python generate_recommendations.py "Nikhil Dnyaneshwar Jadhav.mht" -o output/recommendations.csv
+  python generate_recommendations.py scorecards/scorecard.pdf --streams all
 
 Requires:
-  - pypdf
+  - pypdf (for PDF scorecards only)
   - data/cutoffs_db.csv (build once with: python scripts/parse_cutoffs.py)
 """
 
@@ -79,13 +85,18 @@ CSV_FIELDS = [
     "college_type",
     "median_closing_percentile",
     "min_closing_percentile",
+    "median_closing_merit",
+    "min_closing_merit",
     "difficulty_score",
     "clear_rate",
     "candidate_name",
     "candidate_category",
     "candidate_percentile",
+    "candidate_merit_rank",
     "candidate_gender",
 ]
+
+MERIT_SUFFIXES = {".mht", ".mhtml", ".html", ".htm"}
 
 
 def ownership_rank(status: str) -> int:
@@ -120,6 +131,199 @@ class Student:
     is_female: bool
     roll_no: str = ""
     application_no: str = ""
+    merit_rank: int | None = None  # PCM State General Merit No
+    category_merit_rank: int | None = None
+    home_university: str = ""
+    source: str = "scorecard"  # scorecard | merit_status
+
+
+def _normalize_category(raw: str) -> str:
+    category = raw.upper().strip()
+    category = category.replace("NT-B", "NT1").replace("NTB", "NT1")
+    category = category.replace("NT-C", "NT2").replace("NTC", "NT2")
+    category = category.replace("NT-D", "NT3").replace("NTD", "NT3")
+    return category
+
+
+def _mhtml_plain_lines(path: Path) -> list[str]:
+    raw = path.read_bytes()
+    text = raw.decode("utf-8", errors="replace")
+    if "MIME-Version:" in text[:500] or "multipart/related" in text[:800].lower():
+        html = ""
+        for part in re.split(r"------+[^\n]*", text):
+            idx = part.find("<!DOCTYPE")
+            if idx < 0:
+                idx = part.lower().find("<html")
+            if idx >= 0:
+                html = part[idx:]
+                break
+        if not html:
+            html = text
+    else:
+        html = text
+
+    html = re.sub(r"(?is)<script.*?</script>", " ", html)
+    html = re.sub(r"(?is)<style.*?</style>", " ", html)
+    plain = re.sub(r"(?s)<[^>]+>", "\n", html)
+    plain = (
+        plain.replace("\xa0", " ")
+        .replace("&nbsp;", " ")
+        .replace("&#160;", " ")
+        .replace("&amp;", "&")
+    )
+    plain = re.sub(r"[ \t]+", " ", plain)
+    return [ln.strip() for ln in plain.splitlines() if ln.strip()]
+
+
+def _mhtml_plain_text(path: Path) -> str:
+    return "\n".join(_mhtml_plain_lines(path))
+
+
+def _pdf_plain_text(path: Path) -> str:
+    return "\n".join((p.extract_text() or "") for p in PdfReader(str(path)).pages)
+
+
+def _looks_like_merit_status(text: str) -> bool:
+    t = text.lower()
+    return (
+        "merit status" in t
+        or "pcm state general merit no" in t
+        or "provisional merit" in t
+        or "final merit" in t
+    )
+
+
+_CATEGORY_TOKEN = (
+    r"(DT/VJ|VJ/DT|OPEN|SC|ST|OBC|SEBC|NT-?B|NT-?C|NT-?D|NT[123]|VJ|DT)"
+)
+
+
+def parse_merit_status_text(text: str, force_female: bool | None = None) -> Student:
+    """Parse CET Provisional/Final Merit Status text (from .mht or PDF extract)."""
+    if not text.strip():
+        raise ValueError("Empty merit status text")
+
+    # Prefer "Category for Admission" so nav items like "SC Login" are ignored.
+    m_cat = re.search(
+        rf"Category\s*for\s*Admission\s*:?\s*{_CATEGORY_TOKEN}",
+        text,
+        flags=re.I,
+    )
+    if not m_cat:
+        m_cat = re.search(
+            rf"(?<![A-Za-z])Category\s*:?\s*{_CATEGORY_TOKEN}(?!\s*Login)",
+            text,
+            flags=re.I,
+        )
+    if not m_cat:
+        raise ValueError("Could not find category in merit status")
+    category = _normalize_category(m_cat.group(1))
+
+    m_name = re.search(
+        r"Candidate's\s+Full\s+Name\s*:?\s*([A-Z][A-Z\s'.]{3,80}?)"
+        r"(?=Gender|DOB|Candidature|Category|Application|\n)",
+        text,
+        flags=re.I,
+    )
+    if not m_name:
+        m_name = re.search(
+            r"Candidate\s+Name\s*\(as\s*per\s*CET\)\s*:?\s*([A-Z][A-Z\s'.]{3,80}?)"
+            r"(?=Physics|Chemistry|Mathematics|Total|Gender|\n)",
+            text,
+            flags=re.I,
+        )
+    if not m_name:
+        raise ValueError("Could not find candidate name in merit status")
+    name = " ".join(m_name.group(1).split()).title()
+
+    m_gender = re.search(r"Gender\s*:?\s*(Female|Male)\b", text, flags=re.I)
+    if force_female is not None:
+        is_female = force_female
+    elif m_gender:
+        is_female = m_gender.group(1).lower().startswith("f")
+    else:
+        is_female = False
+
+    m_app = re.search(r"Application\s*ID\s*:?\s*(EN\d+)", text, flags=re.I)
+    application_no = m_app.group(1) if m_app else ""
+
+    m_hu = re.search(
+        r"Home\s+University\s*:?\s*(.+?)"
+        r"(?=Category|Applied\s+for|Candidature|Gender|Orphan)",
+        text,
+        flags=re.I | re.S,
+    )
+    home_university = " ".join(m_hu.group(1).split()) if m_hu else ""
+
+    # Prefer PCM State General Merit (engineering). Works for Final + Provisional,
+    # and for both newline-separated (.mht) and jammed PDF extracts.
+    m_state = re.search(
+        r"PCM\s+State\s+General\s+Merit\s+No\s*:?\s*(\d+)\s*[-–]\s*"
+        r"MHT-CET-PCM[^\n(]*\((\d+\.\d+)\)",
+        text,
+        flags=re.I,
+    )
+    if not m_state:
+        m_block = re.search(
+            r"Your\s+PCM\s+(?:Final|Provisional)\s+Merit\s+Status\s+is\.\.\.(.*)"
+            r"(?:Your\s+PCM\s+or\s+PCB|Important\s+Instructions|Note\s*:-|Login\s+Links)",
+            text,
+            flags=re.I | re.S,
+        )
+        block = m_block.group(1) if m_block else text
+        m_state = re.search(
+            r"(?<!Ladies\s)(?<!All\sIndia\s)State\s+General\s+Merit\s+No\s*:?\s*(\d+)\s*[-–]\s*"
+            r"MHT-CET-PCM[^\n(]*\((\d+\.\d+)\)",
+            block,
+            flags=re.I,
+        )
+    if not m_state:
+        raise ValueError("Could not find PCM State General Merit No in merit status")
+
+    merit_rank = int(m_state.group(1))
+    percentile = float(m_state.group(2))
+
+    m_cat_merit = re.search(
+        rf"PCM\s+State\s+Category\s+Merit\s+No\s*:?\s*{_CATEGORY_TOKEN}\s*[-–]\s*(\d+)",
+        text,
+        flags=re.I,
+    )
+    category_merit_rank = int(m_cat_merit.group(2)) if m_cat_merit else None
+
+    m_roll = re.search(
+        r"MHT-CET\s+20\d{2}\s+PCM\s*\[Roll\s*No\s*-\s*(\d{8,12})",
+        text,
+        flags=re.I,
+    )
+    if not m_roll:
+        m_roll = re.search(r"Roll\s*No\s*-\s*(\d{8,12})", text, flags=re.I)
+    roll_no = m_roll.group(1) if m_roll else ""
+
+    return Student(
+        name=name,
+        category=category,
+        percentile=percentile,
+        is_female=is_female,
+        roll_no=roll_no,
+        application_no=application_no,
+        merit_rank=merit_rank,
+        category_merit_rank=category_merit_rank,
+        home_university=home_university,
+        source="merit_status",
+    )
+
+
+def parse_merit_status(path: Path, force_female: bool | None = None) -> Student:
+    """Parse a CET Merit Status page (.mht / .mhtml / .html / merit PDF)."""
+    suffix = path.suffix.lower()
+    if suffix == ".pdf":
+        text = _pdf_plain_text(path)
+    else:
+        text = _mhtml_plain_text(path)
+    try:
+        return parse_merit_status_text(text, force_female=force_female)
+    except ValueError as e:
+        raise ValueError(f"{e}: {path}") from e
 
 
 def parse_student_card(pdf_path: Path, force_female: bool | None = None) -> Student:
@@ -133,10 +337,7 @@ def parse_student_card(pdf_path: Path, force_female: bool | None = None) -> Stud
     if not cats:
         raise ValueError(f"Could not find category in scorecard: {pdf_path}")
 
-    category = cats[0].upper()
-    category = category.replace("NT-B", "NT1").replace("NTB", "NT1")
-    category = category.replace("NT-C", "NT2").replace("NTC", "NT2")
-    category = category.replace("NT-D", "NT3").replace("NTD", "NT3")
+    category = _normalize_category(cats[0])
 
     pcts = [float(x) for x in re.findall(r"\b(\d{1,2}\.\d{5,})\b", text)]
     if not pcts:
@@ -179,6 +380,31 @@ def parse_student_card(pdf_path: Path, force_female: bool | None = None) -> Stud
         is_female=is_female,
         roll_no=rolls[-1] if rolls else "",
         application_no=rolls[0] if rolls else "",
+        source="scorecard",
+    )
+
+
+def parse_candidate(path: Path, force_female: bool | None = None) -> Student:
+    suffix = path.suffix.lower()
+    if suffix in MERIT_SUFFIXES:
+        return parse_merit_status(path, force_female=force_female)
+    if suffix == ".pdf":
+        text = _pdf_plain_text(path)
+        if _looks_like_merit_status(text):
+            return parse_merit_status_text(text, force_female=force_female)
+        return parse_student_card(path, force_female=force_female)
+    # Content sniff for extension-less / odd saves
+    head = path.read_bytes()[:2000].decode("utf-8", errors="replace")
+    head_l = head.lower()
+    if (
+        "merit status" in head_l
+        or "multipart/related" in head_l
+        or "<html" in head_l
+    ):
+        return parse_merit_status(path, force_female=force_female)
+    raise ValueError(
+        f"Unsupported candidate file type: {path.suffix or '(none)'} "
+        f"(expected merit-status .mht/.pdf or CET scorecard .pdf)"
     )
 
 
@@ -216,15 +442,30 @@ def load_relevant_rows(db_path: Path, codes: set[str]) -> list[dict]:
                 row["percentile_f"] = float(row["percentile"])
             except ValueError:
                 continue
+            rank_raw = (row.get("merit_rank") or "").strip()
+            if rank_raw.isdigit():
+                row["merit_rank_i"] = int(rank_raw)
+            else:
+                row["merit_rank_i"] = None
             if not row["choice_code"] or not row["college_name"]:
                 continue
             rows.append(row)
     return rows
 
 
-def aggregate(rows: list[dict], student_pct: float) -> list[dict]:
+def aggregate(rows: list[dict], student: Student) -> list[dict]:
+    """Score college–branch options for a candidate.
+
+    When ``student.merit_rank`` is set (Final Merit Status), matching uses CAP
+    State General Merit numbers (lower rank is better). Otherwise matching uses
+    percentile (higher is better). Difficulty / display closings stay percentile-
+    based so shortlist ordering stays comparable.
+    """
     by_choice: dict[str, list] = defaultdict(list)
     meta: dict[str, dict] = {}
+    use_merit = student.merit_rank is not None
+    student_pct = student.percentile
+    student_rank = student.merit_rank
 
     for r in rows:
         key = r["choice_code"]
@@ -241,19 +482,38 @@ def aggregate(rows: list[dict], student_pct: float) -> list[dict]:
 
     results = []
     for choice, items in by_choice.items():
-        by_yr: dict[tuple[str, str], list[float]] = defaultdict(list)
+        by_yr: dict[tuple[str, str], list[dict]] = defaultdict(list)
         for r in items:
-            by_yr[(r["year"], r["round"])].append(r["percentile_f"])
+            by_yr[(r["year"], r["round"])].append(r)
 
         observations = []
-        for (year, rnd), pcts in by_yr.items():
-            best = min(pcts)
+        for (year, rnd), group in by_yr.items():
+            pcts = [r["percentile_f"] for r in group]
+            ranks = [r["merit_rank_i"] for r in group if r.get("merit_rank_i") is not None]
+            best_pct = min(pcts)  # easiest closing by percentile
+            # Easiest closing by rank = highest merit number among eligible seats
+            best_rank = max(ranks) if ranks else None
+
+            if use_merit and best_rank is not None and student_rank is not None:
+                cleared = student_rank <= best_rank
+                # ~3 percentile-points of slack ≈ a few thousand merit places
+                rank_slack = max(2500, int(best_rank * 0.04))
+                reachable = student_rank <= best_rank + rank_slack
+                signal = best_rank
+            else:
+                cleared = student_pct >= best_pct
+                reachable = best_pct <= student_pct + 3.0
+                signal = best_pct
+
             observations.append(
                 {
                     "year": year,
                     "round": rnd,
-                    "best_closing": best,
-                    "cleared": student_pct >= best,
+                    "best_closing": best_pct,
+                    "best_rank": best_rank,
+                    "cleared": cleared,
+                    "reachable": reachable,
+                    "signal": signal,
                     "w": YEAR_WEIGHT.get(year, 0.2) * ROUND_WEIGHT.get(rnd, 0.5),
                 }
             )
@@ -274,37 +534,79 @@ def aggregate(rows: list[dict], student_pct: float) -> list[dict]:
         closings_sorted = sorted(o["best_closing"] for o in observations)
         median_like = closings_sorted[len(closings_sorted) // 2]
 
-        reachable = [o for o in observations if o["best_closing"] <= student_pct + 3.0]
+        rank_vals = [o["best_rank"] for o in observations if o["best_rank"] is not None]
+        min_closing_rank = max(rank_vals) if rank_vals else None  # easiest
+        max_closing_rank = min(rank_vals) if rank_vals else None  # hardest
+        median_rank = (
+            sorted(rank_vals)[len(rank_vals) // 2] if rank_vals else None
+        )
+
+        reachable = [o for o in observations if o["reachable"]]
         reachable_rate = len(reachable) / len(observations)
 
-        if not cleared and reachable_rate < 0.25:
-            continue
-        if min_closing > student_pct + 3.0:
-            continue
-        if len(observations) < 2 and min_closing > student_pct:
-            continue
+        if use_merit and student_rank is not None and median_rank is not None:
+            # Positive gap => candidate is better than the closing merit.
+            gap_median = median_rank - student_rank
+            gap_best = (min_closing_rank - student_rank) if min_closing_rank else 0
 
-        clear_rate = len(cleared) / len(observations)
-        cap1_clear_rate = len(cleared_cap1) / len(cap1) if cap1 else 0.0
+            if not cleared and reachable_rate < 0.25:
+                continue
+            if min_closing_rank is not None and student_rank > min_closing_rank + max(
+                2500, int(min_closing_rank * 0.04)
+            ):
+                continue
+            if len(observations) < 2 and gap_best < 0:
+                continue
 
-        if cap1_clear_rate >= 0.67 and median_like <= student_pct - 3:
-            bucket = "safe"
-        elif clear_rate >= 0.35 or (
-            cap1_clear_rate >= 0.33 and median_like <= student_pct + 2
-        ):
-            bucket = "moderate"
-        elif reachable_rate >= 0.25 and median_like <= student_pct + 8:
-            bucket = "aspirational"
+            clear_rate = len(cleared) / len(observations)
+            cap1_clear_rate = len(cleared_cap1) / len(cap1) if cap1 else 0.0
+
+            if cap1_clear_rate >= 0.67 and gap_median >= 3000:
+                bucket = "safe"
+            elif clear_rate >= 0.35 or (cap1_clear_rate >= 0.33 and gap_median >= -2000):
+                bucket = "moderate"
+            elif reachable_rate >= 0.25 and gap_median >= -8000:
+                bucket = "aspirational"
+            else:
+                continue
+
+            if not cleared and bucket != "aspirational":
+                bucket = "aspirational"
+            elif clear_rate < 0.2 and gap_median < 0:
+                bucket = "aspirational"
+
+            # Drop ultra-easy filler safes far below the candidate's merit.
+            if bucket == "safe" and gap_median > max(25000, int(student_rank * 0.45)):
+                continue
         else:
-            continue
+            if not cleared and reachable_rate < 0.25:
+                continue
+            if min_closing > student_pct + 3.0:
+                continue
+            if len(observations) < 2 and min_closing > student_pct:
+                continue
 
-        if not cleared and bucket != "aspirational":
-            bucket = "aspirational"
-        elif clear_rate < 0.2 and median_like > student_pct:
-            bucket = "aspirational"
+            clear_rate = len(cleared) / len(observations)
+            cap1_clear_rate = len(cleared_cap1) / len(cap1) if cap1 else 0.0
 
-        if bucket == "safe" and median_like < max(30.0, student_pct - 25.0):
-            continue
+            if cap1_clear_rate >= 0.67 and median_like <= student_pct - 3:
+                bucket = "safe"
+            elif clear_rate >= 0.35 or (
+                cap1_clear_rate >= 0.33 and median_like <= student_pct + 2
+            ):
+                bucket = "moderate"
+            elif reachable_rate >= 0.25 and median_like <= student_pct + 8:
+                bucket = "aspirational"
+            else:
+                continue
+
+            if not cleared and bucket != "aspirational":
+                bucket = "aspirational"
+            elif clear_rate < 0.2 and median_like > student_pct:
+                bucket = "aspirational"
+
+            if bucket == "safe" and median_like < max(30.0, student_pct - 25.0):
+                continue
 
         results.append(
             {
@@ -314,6 +616,9 @@ def aggregate(rows: list[dict], student_pct: float) -> list[dict]:
                 "min_closing": min_closing,
                 "max_closing": max_closing,
                 "median_closing": median_like,
+                "min_closing_rank": min_closing_rank,
+                "max_closing_rank": max_closing_rank,
+                "median_closing_rank": median_rank,
                 "clear_rate": clear_rate,
                 "cap1_clear_rate": cap1_clear_rate,
                 "years_cleared_any": len(years_cleared_any),
@@ -429,11 +734,14 @@ def write_csv(path: Path, curated: list[dict], student: Student) -> None:
                         ),
                         "median_closing_percentile": round(r["median_closing"], 4),
                         "min_closing_percentile": round(r["min_closing"], 4),
+                        "median_closing_merit": r.get("median_closing_rank") or "",
+                        "min_closing_merit": r.get("min_closing_rank") or "",
                         "difficulty_score": round(r["difficulty"], 4),
                         "clear_rate": round(r["clear_rate"], 4),
                         "candidate_name": student.name,
                         "candidate_category": student.category,
                         "candidate_percentile": student.percentile,
+                        "candidate_merit_rank": student.merit_rank or "",
                         "candidate_gender": gender,
                     }
                 )
@@ -447,7 +755,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument(
         "scorecard",
         type=Path,
-        help="Path to candidate MHT-CET scorecard PDF",
+        help=(
+            "Candidate file: MHT-CET scorecard PDF, or CET Final Merit Status "
+            "(.mht / .mhtml / .html)"
+        ),
     )
     p.add_argument(
         "-o",
@@ -533,16 +844,27 @@ def main(argv: list[str] | None = None) -> int:
 
     force_female = True if args.female else False if args.male else None
     try:
-        student = parse_student_card(args.scorecard, force_female=force_female)
+        student = parse_candidate(args.scorecard, force_female=force_female)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
 
+    merit_bit = (
+        f" | state_merit={student.merit_rank}"
+        if student.merit_rank is not None
+        else ""
+    )
+    hu_bit = f" | HU={student.home_university}" if student.home_university else ""
     print(
         f"Candidate: {student.name} | category={student.category} | "
-        f"percentile={student.percentile:.7f} | "
-        f"gender={'female' if student.is_female else 'male'}"
+        f"percentile={student.percentile:.7f}{merit_bit} | "
+        f"gender={'female' if student.is_female else 'male'} | "
+        f"source={student.source}{hu_bit}"
     )
+    if student.merit_rank is not None:
+        print("Matching mode: State General Merit rank (CAP closing ranks)")
+    else:
+        print("Matching mode: percentile (no merit rank in input)")
 
     try:
         selected_streams = select_streams(args)
@@ -572,7 +894,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  [{mark}] {STREAMS[sid]}: {len(grouped[sid])} branch types")
     print(f"  [ ] Other / specialized (excluded): {len(grouped['other'])} branch types")
 
-    results = aggregate(rows, student.percentile)
+    results = aggregate(rows, student)
     results = filter_by_streams(results, selected_streams)
     print(f"Options with a chance in selected streams: {len(results)}")
 

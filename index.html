@@ -3,718 +3,664 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CAP Priority List — Project Description</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <title>CAP Priority List</title>
   <style>
     :root {
-      --ink: #0e1621;
-      --muted: #4d5b6a;
-      --line: #c9d4e0;
-      --bg: #eef3f8;
-      --surface: #f8fafc;
-      --accent: #0b5f8a;
-      --accent-2: #1a8a6a;
-      --accent-soft: rgba(11, 95, 138, 0.09);
-      --asp: #8b2e4a;
-      --mod: #8a5a12;
-      --safe: #1b5f8a;
-      --max: 880px;
+      --desk: #f3f6fa;
+      --desk-2: #e8eef6;
+      --ink: #1b2430;
+      --muted: #5c6b7a;
+      --tile-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 6px 18px rgba(27, 36, 48, 0.08);
+      --gap: 0.65rem;
+      --unit: 8.5rem;
+      --cols: 8;
+      --font: "Segoe UI", "Segoe UI Variable", Tahoma, Geneva, sans-serif;
+      --mono: Consolas, "Courier New", monospace;
+      --shell-pad: 2rem;
     }
 
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
+      min-height: 100vh;
       color: var(--ink);
-      font-family: "Source Sans 3", system-ui, sans-serif;
-      font-size: 1.05rem;
-      line-height: 1.65;
+      font-family: var(--font);
+      font-size: 18px;
+      line-height: 1.5;
       background:
-        linear-gradient(180deg, #dce7f2 0%, var(--bg) 22%, #e8eef5 100%);
-      background-attachment: fixed;
+        radial-gradient(1000px 600px at 10% 0%, #dff3f0 0%, transparent 55%),
+        radial-gradient(900px 500px at 95% 10%, #dceaf8 0%, transparent 50%),
+        linear-gradient(165deg, #f7f9fc 0%, var(--desk) 40%, var(--desk-2) 100%);
     }
 
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.35;
-      background-image:
-        linear-gradient(rgba(14, 22, 33, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(14, 22, 33, 0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: linear-gradient(180deg, #000 0%, transparent 70%);
-    }
-
-    .wrap {
-      position: relative;
-      width: min(var(--max), calc(100% - 2rem));
+    .shell {
+      width: min(1180px, calc(100% - var(--shell-pad)));
       margin: 0 auto;
-      padding: 3.25rem 0 4.5rem;
+      padding: 1.4rem 0 3.5rem;
     }
 
-    header {
-      padding-bottom: 2rem;
-      border-bottom: 1px solid var(--line);
-      animation: rise 0.65s ease both;
-    }
-
-    .brand {
-      font-family: Syne, sans-serif;
-      font-weight: 800;
-      font-size: clamp(2.4rem, 6vw, 3.6rem);
-      letter-spacing: -0.04em;
-      line-height: 1.05;
-      margin: 0 0 0.85rem;
-      color: var(--ink);
-    }
-
-    .brand span {
-      color: var(--accent);
-    }
-
-    .tagline {
-      margin: 0;
-      max-width: 40rem;
-      font-size: 1.15rem;
-      color: var(--muted);
-    }
-
-    .meta {
+    .topbar {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.55rem;
-      margin-top: 1.35rem;
-    }
-
-    .meta span {
-      font-size: 0.82rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      color: var(--accent);
-      background: var(--surface);
-      border: 1px solid var(--line);
-      padding: 0.35rem 0.7rem;
-    }
-
-    nav.toc {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.85rem 1.25rem;
-      margin-top: 1.75rem;
-      font-size: 0.95rem;
-    }
-
-    nav.toc a {
-      color: var(--ink);
-      text-decoration: none;
-      border-bottom: 1.5px solid transparent;
-      transition: border-color 0.2s, color 0.2s;
-    }
-
-    nav.toc a:hover {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    section {
-      margin-top: 3rem;
-      animation: rise 0.7s ease both;
-    }
-
-    section:nth-of-type(1) { animation-delay: 0.04s; }
-    section:nth-of-type(2) { animation-delay: 0.08s; }
-    section:nth-of-type(3) { animation-delay: 0.12s; }
-    section:nth-of-type(4) { animation-delay: 0.16s; }
-    section:nth-of-type(5) { animation-delay: 0.2s; }
-    section:nth-of-type(6) { animation-delay: 0.24s; }
-
-    h2 {
-      font-family: Syne, sans-serif;
-      font-weight: 700;
-      font-size: 1.55rem;
-      letter-spacing: -0.02em;
-      margin: 0 0 0.85rem;
-    }
-
-    h3 {
-      font-family: Syne, sans-serif;
-      font-weight: 700;
-      font-size: 1.05rem;
-      margin: 1.5rem 0 0.45rem;
-      letter-spacing: -0.01em;
-    }
-
-    p { margin: 0 0 0.9rem; }
-    .muted { color: var(--muted); }
-
-    .lead {
-      font-size: 1.12rem;
-      max-width: 46rem;
-    }
-
-    /* Architecture diagram */
-    .arch {
-      margin-top: 1.25rem;
-      display: grid;
-      gap: 0.65rem;
-    }
-
-    .arch-row {
-      display: grid;
-      grid-template-columns: 7.5rem 1fr;
-      gap: 1rem;
-      align-items: stretch;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      padding: 1rem 1.1rem;
-      transition: transform 0.25s ease, border-color 0.25s ease;
-    }
-
-    .arch-row:hover {
-      transform: translateX(4px);
-      border-color: var(--accent);
-    }
-
-    .arch-layer {
-      font-family: Syne, sans-serif;
-      font-weight: 700;
-      font-size: 0.78rem;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--accent);
-      display: flex;
       align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem 1.25rem;
+      margin-bottom: 1.75rem;
+      padding: 0.85rem 1rem;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(27, 36, 48, 0.08);
+      box-shadow: 0 4px 14px rgba(27, 36, 48, 0.05);
     }
 
-    .arch-body strong {
-      display: block;
-      font-family: Syne, sans-serif;
-      font-size: 1rem;
-      margin-bottom: 0.2rem;
-    }
-
-    .arch-body p {
-      margin: 0;
+    .topbar .repo-label {
       font-size: 0.95rem;
       color: var(--muted);
+      margin: 0;
     }
 
-    .arch-body code {
-      font-size: 0.84em;
-    }
-
-    .arrow {
-      text-align: center;
-      color: var(--accent);
-      font-size: 1.1rem;
-      line-height: 1;
-      opacity: 0.7;
-    }
-
-    .modules {
-      display: grid;
-      gap: 0.75rem;
-      margin-top: 1rem;
-    }
-
-    .module {
-      display: grid;
-      grid-template-columns: minmax(10rem, 14rem) 1fr;
-      gap: 1rem;
-      padding: 1rem 0;
-      border-top: 1px solid var(--line);
-    }
-
-    .module:last-child { border-bottom: 1px solid var(--line); }
-
-    .module .file {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.86rem;
-      font-weight: 600;
-      color: var(--accent);
+    .topbar .repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 1.05rem;
+      font-weight: 650;
+      color: #0078d4;
+      text-decoration: none;
       word-break: break-all;
     }
 
-    .module p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.98rem;
-    }
+    .topbar .repo-link:hover { text-decoration: underline; }
 
-    .steps {
-      counter-reset: step;
-      list-style: none;
-      margin: 1rem 0 0;
-      padding: 0;
-      display: grid;
-      gap: 0.85rem;
-    }
-
-    .steps li {
-      counter-increment: step;
-      position: relative;
-      padding: 1rem 1.1rem 1rem 3.4rem;
-      background: var(--surface);
-      border: 1px solid var(--line);
-    }
-
-    .steps li::before {
-      content: counter(step);
-      position: absolute;
-      left: 1rem;
-      top: 1rem;
-      width: 1.65rem;
-      height: 1.65rem;
-      display: grid;
-      place-items: center;
-      font-family: Syne, sans-serif;
-      font-weight: 700;
-      font-size: 0.85rem;
-      color: #fff;
-      background: var(--accent);
-    }
-
-    .steps h3 {
-      margin: 0 0 0.25rem;
+    .topbar .repo-link::before {
+      content: "⌘";
       font-size: 1rem;
+      opacity: 0.7;
+      flex-shrink: 0;
     }
 
-    .steps p {
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+      grid-auto-rows: minmax(var(--unit), auto);
+      gap: var(--gap);
+      align-items: stretch;
+    }
+
+    .tile {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.65rem;
+      padding: 1.1rem 1.15rem 0.95rem;
+      color: var(--ink);
+      text-decoration: none;
+      overflow: visible;
+      border: 1px solid rgba(27, 36, 48, 0.06);
+      box-shadow: var(--tile-shadow);
+      transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+    }
+
+    .tile:hover {
+      transform: scale(1.015);
+      filter: brightness(1.03);
+      box-shadow: 0 10px 28px rgba(27, 36, 48, 0.12);
+      z-index: 2;
+    }
+
+    .tile:focus-visible {
+      outline: 3px solid #0078d4;
+      outline-offset: 2px;
+    }
+
+    .tile .title {
+      font-size: clamp(1.15rem, 2.4vw, 1.35rem);
+      font-weight: 650;
       margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .tile .body {
+      margin: 0.2rem 0 0;
+      font-size: clamp(0.98rem, 2.1vw, 1.08rem);
+      line-height: 1.45;
+      color: rgba(27, 36, 48, 0.88);
+    }
+
+    .tile .meta {
+      font-family: var(--mono);
+      font-size: clamp(0.82rem, 1.8vw, 0.9rem);
       color: var(--muted);
-      font-size: 0.95rem;
+      margin-top: auto;
+      padding-top: 0.35rem;
     }
 
-    .buckets {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-      margin-top: 1rem;
+    .tile .glyph {
+      font-size: clamp(1.6rem, 3vw, 2rem);
+      font-weight: 200;
+      line-height: 1;
+      opacity: 0.85;
+      margin-bottom: 0.35rem;
+      color: rgba(27, 36, 48, 0.55);
     }
 
-    .bucket {
-      padding: 1rem 1.05rem;
-      border-top: 3px solid;
-      background: var(--surface);
-      border-right: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      border-left: 1px solid var(--line);
+    /* Desktop spans (8-col) */
+    .t1x1 { grid-column: span 1; grid-row: span 1; }
+    .t2x1 { grid-column: span 2; grid-row: span 1; }
+    .t2x2 { grid-column: span 2; grid-row: span 2; }
+    .t4x1 { grid-column: span 4; grid-row: span 1; }
+    .t4x2 { grid-column: span 4; grid-row: span 2; }
+    .t8x1 { grid-column: span 8; grid-row: span 1; }
+    .t8x2 { grid-column: span 8; grid-row: span 2; }
+    .t8x3 { grid-column: span 8; grid-row: span 3; }
+
+    .c-teal   { background: #d7f3ef; }
+    .c-blue   { background: #d6ebfb; }
+    .c-indigo { background: #ebe0f4; }
+    .c-orange { background: #fde4d4; }
+    .c-red    { background: #fbd9de; }
+    .c-green  { background: #def0d8; }
+    .c-cyan   { background: #d5f1f7; }
+    .c-slate  { background: #e4e9ef; }
+    .c-navy   { background: #d9e4f5; }
+    .c-amber  { background: #ffefd0; }
+    .c-pink   { background: #f7dff3; }
+    .c-steel  { background: #e2e8ee; }
+    .c-warn   { background: #fff3cd; }
+
+    .tile.wide-copy .body { max-width: none; }
+
+    .tile pre,
+    .tile .codeblock {
+      margin: 0.45rem 0 0;
+      padding: 0.7rem 0.8rem;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(27, 36, 48, 0.08);
+      font-family: var(--mono);
+      font-size: clamp(0.85rem, 1.9vw, 0.95rem);
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #1b2430;
+      max-width: 100%;
     }
 
-    .bucket.asp { border-top-color: var(--asp); }
-    .bucket.mod { border-top-color: var(--mod); }
-    .bucket.safe { border-top-color: var(--safe); }
+    .tile ul {
+      margin: 0.35rem 0 0;
+      padding-left: 1.2rem;
+      font-size: clamp(0.98rem, 2.1vw, 1.05rem);
+    }
 
-    .bucket h3 { margin: 0 0 0.35rem; }
-    .bucket.asp h3 { color: var(--asp); }
-    .bucket.mod h3 { color: var(--mod); }
-    .bucket.safe h3 { color: var(--safe); }
-    .bucket p { margin: 0; color: var(--muted); font-size: 0.92rem; }
-    .bucket .count {
-      display: block;
-      margin-top: 0.65rem;
-      font-family: Syne, sans-serif;
-      font-weight: 700;
-      font-size: 0.9rem;
+    .tile li { margin: 0.35rem 0; }
+
+    .tile ol.assumptions {
+      margin: 0.45rem 0 0;
+      padding-left: 1.35rem;
+      font-size: clamp(0.98rem, 2.1vw, 1.05rem);
+    }
+
+    .tile ol.assumptions li {
+      margin: 0.45rem 0;
+      padding-left: 0.15rem;
+    }
+
+    .tile ol.assumptions strong {
       color: var(--ink);
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.95rem;
-      margin-top: 0.75rem;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 0.65rem 0.5rem;
-      border-bottom: 1px solid var(--line);
-      vertical-align: top;
-    }
-
-    th {
-      font-size: 0.75rem;
+    .group {
+      margin-top: 2.2rem;
+      margin-bottom: 0.85rem;
+      font-size: clamp(1rem, 2.2vw, 1.15rem);
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--muted);
-      font-weight: 700;
     }
 
-    code, .mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.86em;
-      background: rgba(11, 95, 138, 0.08);
-      padding: 0.08rem 0.32rem;
-      border-radius: 3px;
-    }
-
-    pre {
-      margin: 0.9rem 0 0;
-      padding: 1rem 1.1rem;
-      overflow-x: auto;
-      background: #101820;
-      color: #dce7f0;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.86rem;
-      line-height: 1.55;
-    }
-
-    .formula {
-      margin-top: 0.85rem;
-      padding: 1rem 1.1rem;
-      background: #101820;
-      color: #dce7f0;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.86rem;
-      line-height: 1.55;
-    }
-
-    .tree {
-      margin: 0.9rem 0 0;
-      padding: 1rem 1.1rem;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.82rem;
-      line-height: 1.55;
-      overflow-x: auto;
-      white-space: pre;
-      color: var(--ink);
-    }
-
-    .note {
-      margin-top: 1.1rem;
-      padding: 0.85rem 1rem;
-      border-left: 3px solid var(--accent-2);
-      background: rgba(26, 138, 106, 0.08);
-      font-size: 0.95rem;
-    }
-
-    .limits {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-      margin-top: 1rem;
-    }
-
-    .limit {
-      padding: 0.9rem 1rem;
-      background: var(--surface);
-      border: 1px solid var(--line);
-    }
-
-    .limit h3 { margin: 0 0 0.3rem; font-size: 0.98rem; }
-    .limit p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+    .group:first-of-type { margin-top: 0; }
 
     footer {
-      margin-top: 3.25rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid var(--line);
+      margin-top: 2.2rem;
       color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
+      font-family: var(--mono);
     }
 
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Tablet */
+    @media (max-width: 980px) {
+      :root {
+        --cols: 4;
+        --unit: 7.2rem;
+        --shell-pad: 1.5rem;
+      }
+
+      body { font-size: 17px; }
+
+      .t1x1, .t2x1 { grid-column: span 2; grid-row: span 1; }
+      .t2x2 { grid-column: span 2; grid-row: span 2; }
+      .t4x1, .t4x2, .t8x1, .t8x2, .t8x3 {
+        grid-column: span 4;
+      }
+      .t4x2, .t8x2 { grid-row: span 2; }
+      .t8x3 { grid-row: span 3; }
     }
 
-    @media (max-width: 720px) {
-      .wrap { width: min(var(--max), calc(100% - 1.25rem)); padding-top: 2rem; }
-      .arch-row, .module { grid-template-columns: 1fr; gap: 0.35rem; }
-      .buckets, .limits { grid-template-columns: 1fr; }
-      .arch-layer { margin-bottom: 0.15rem; }
+    /* Large phone */
+    @media (max-width: 640px) {
+      :root {
+        --cols: 2;
+        --unit: auto;
+        --gap: 0.55rem;
+        --shell-pad: 1.1rem;
+      }
+
+      body { font-size: 16px; }
+
+      .tiles {
+        grid-auto-rows: auto;
+      }
+
+      .t1x1, .t2x1, .t2x2, .t4x1, .t4x2, .t8x1, .t8x2, .t8x3 {
+        grid-column: span 2;
+        grid-row: span 1;
+      }
+
+      .tile {
+        padding: 1rem 1rem 0.9rem;
+      }
+
+      .tile:hover {
+        transform: none;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    /* Small phone */
+    @media (max-width: 400px) {
+      :root { --shell-pad: 0.85rem; }
+      body { font-size: 15.5px; }
+      .tile ul,
+      .tile ol.assumptions { padding-left: 1.05rem; }
+    }
+
+    @media (hover: none) {
+      .tile:hover {
+        transform: none;
+        filter: none;
+        box-shadow: var(--tile-shadow);
+      }
     }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <header>
-      <h1 class="brand">CAP <span>Priority List</span></h1>
-      <p class="tagline">
-        A Maharashtra CAP engineering preference recommender. Given an MHT-CET
-        scorecard and historical CAP cutoffs, it builds a shortlist of college–branch
-        options ranked into aspirational, moderate, and safe buckets.
-      </p>
-      <div class="meta" aria-label="Project facts">
-        <span>Python CLI</span>
-        <span>MHT-CET → CAP</span>
-        <span>3 years × CAP 1–3</span>
-        <span>~100 preference rows</span>
-      </div>
-      <nav class="toc" aria-label="On this page">
-        <a href="#about">About</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#how">How it works</a>
-        <a href="#layout">Layout</a>
-        <a href="#run">Run</a>
-        <a href="#limits">Limits</a>
-      </nav>
+  <div class="shell">
+    <header class="topbar">
+      <p class="repo-label">Project repository</p>
+      <a class="repo-link" href="https://github.com/ninadrathod/cap-priority-list">
+        https://github.com/ninadrathod/cap-priority-list
+      </a>
     </header>
 
-    <section id="about">
-      <h2>About</h2>
-      <p class="lead">
-        CAP allotment is competitive and category-specific. This project does not
-        invent college rankings from reputation. It reconstructs chance from published
-        closing percentiles, compares them to the candidate’s MHT-CET percentile, and
-        emits a curated CSV that can be used as a starting preference list.
-      </p>
-      <p class="muted">
-        Higher percentile = stronger score. A historical closing of 88.5 means students
-        typically needed about that percentile (or better) to get that seat in that round.
-      </p>
-    </section>
+    <p class="group">CAP Priority List</p>
+    <div class="tiles">
+      <a class="tile t8x2 c-teal" href="#assumptions">
+        <div>
+          <div class="glyph">▣</div>
+          <h2 class="title">CAP Priority List</h2>
+          <p class="body wide-copy">
+            A practical helper for <strong>Maharashtra CAP engineering admissions</strong>.
+            Filling the option form means ranking dozens of college–branch pairs under
+            time pressure. This project turns published CAP cutoff history into a
+            short, ordered preference list tailored to one candidate.
+          </p>
+          <p class="body wide-copy" style="margin-top:0.65rem">
+            You provide a <strong>CET Final Merit Status</strong> page (recommended)
+            or an MHT-CET scorecard. The tool reads category, gender, percentile, and —
+            when available — <strong>PCM State General Merit No</strong>. It then
+            compares those against three years of CAP Round 1–3 closings already parsed
+            into <code>data/cutoffs_db.csv</code>.
+          </p>
+          <p class="body wide-copy" style="margin-top:0.65rem">
+            The result is a CSV of about <strong>100 college–branch options</strong>
+            split into <strong>aspirational</strong>, <strong>moderate</strong>, and
+            <strong>safe</strong> buckets. Government, government-aided, and university
+            institutes are preferred when they qualify. Use it as a starting preference
+            list — not a guarantee of allotment. See
+            <strong>Assumptions</strong> below for every modeling choice.
+          </p>
+        </div>
+        <div class="meta">CLI · generate_recommendations.py · open-source on GitHub</div>
+      </a>
 
-    <section id="architecture">
-      <h2>Architecture</h2>
-      <p class="muted">
-        Two stages: a one-time (or rare) offline build of a cutoff database, then an
-        online recommendation pass for each candidate scorecard.
-      </p>
+      <a class="tile t2x1 c-blue" href="#logic">
+        <div>
+          <h2 class="title">Inputs</h2>
+          <p class="body">Merit .mht (preferred) or CET scorecard PDF + raw CAP cutoff PDFs</p>
+        </div>
+      </a>
 
-      <div class="arch" aria-label="System architecture layers">
-        <div class="arch-row">
-          <div class="arch-layer">Sources</div>
-          <div class="arch-body">
-            <strong>Raw CAP PDFs + scorecard PDF</strong>
-            <p>
-              Historical cutoffs under <code>raw/YYYY-YY/Cutoffs/</code>
-              (2022–23 … 2024–25, CAP1–3). Candidate MHT-CET scorecard under
-              <code>scorecards/</code> (local only, gitignored).
-            </p>
-          </div>
+      <a class="tile t2x1 c-cyan" href="#database">
+        <div>
+          <h2 class="title">Output</h2>
+          <p class="body">output/recommendations.csv — priority-ordered choices</p>
         </div>
-        <div class="arrow" aria-hidden="true">↓</div>
-        <div class="arch-row">
-          <div class="arch-layer">Ingest</div>
-          <div class="arch-body">
-            <strong><code>scripts/parse_cutoffs.py</code></strong>
-            <p>
-              Parses college headers, choice codes, categories, Stage-I closings.
-              Normalizes codes and writes a flat table
-              <code>data/cutoffs_db.csv</code> (~187k rows).
-            </p>
-          </div>
+      </a>
+
+      <a class="tile t2x1 c-amber" href="#database">
+        <div>
+          <h2 class="title">Who it’s for</h2>
+          <p class="body">Candidates (and families) preparing CAP preference forms for FE engineering</p>
         </div>
-        <div class="arrow" aria-hidden="true">↓</div>
-        <div class="arch-row">
-          <div class="arch-layer">Classify</div>
-          <div class="arch-body">
-            <strong><code>scripts/branch_categories.py</code></strong>
-            <p>
-              Maps every branch name into one of five streams (CS/IT, Electronics,
-              Electrical, Mechanical, Civil). Used to filter the shortlist.
-            </p>
-          </div>
+      </a>
+
+      <a class="tile t2x1 c-navy" href="#logic">
+        <div>
+          <div class="glyph">01→04</div>
+          <h2 class="title">Pipeline</h2>
+          <p class="body">Parse DB → read candidate → filter → score &amp; shortlist</p>
         </div>
-        <div class="arrow" aria-hidden="true">↓</div>
-        <div class="arch-row">
-          <div class="arch-layer">Recommend</div>
-          <div class="arch-body">
-            <strong><code>generate_recommendations.py</code></strong>
-            <p>
-              Scorecard → eligible seats → stream filter → weighted difficulty →
-              aspirational / moderate / safe buckets → ownership-biased shortlist → CSV.
-            </p>
-          </div>
+      </a>
+    </div>
+
+    <p class="group" id="database">How the database is generated</p>
+    <div class="tiles">
+      <div class="tile t8x2 c-cyan wide-copy">
+        <div>
+          <h2 class="title">Cutoff database: <code>data/cutoffs_db.csv</code></h2>
+          <p class="body">
+            Recommendations do not read CAP PDFs at runtime. First, a one-time (or rare)
+            offline step converts historical cutoff PDFs into a flat CSV database.
+          </p>
+          <ol class="assumptions">
+            <li>
+              <strong>Source files</strong> live under <code>raw/YYYY-YY/Cutoffs/</code>
+              (currently 2022–23, 2023–24, 2024–25). Each year has CAP Round 1–3 PDFs
+              whose names contain <code>CAP1</code>, <code>CAP2</code>, or <code>CAP3</code>.
+            </li>
+            <li>
+              <strong>Parser:</strong> <code>python scripts/parse_cutoffs.py</code>
+              extracts text from each PDF, finds college headers, choice codes / branches,
+              category columns, and Stage-I closing <strong>merit rank + percentile</strong>
+              pairs, then normalizes codes (zero-padding, suffixes like F/K/U).
+            </li>
+            <li>
+              <strong>Output:</strong> one row per allotment cell written to
+              <code>data/cutoffs_db.csv</code> with fields such as year, round,
+              college, choice_code, branch, status, category, merit_rank, percentile, stage.
+            </li>
+            <li>
+              <strong>When to rebuild:</strong> after adding a new year folder under
+              <code>raw/</code>, or if parsing logic changes. Day-to-day recommendation
+              runs only read this CSV.
+            </li>
+          </ol>
+          <div class="codeblock">python scripts/parse_cutoffs.py
+# → data/cutoffs_db.csv  (~187k rows from 9 CAP PDFs)</div>
         </div>
-        <div class="arrow" aria-hidden="true">↓</div>
-        <div class="arch-row">
-          <div class="arch-layer">Output</div>
-          <div class="arch-body">
-            <strong><code>output/recommendations.csv</code></strong>
-            <p>
-              Priority-ordered college–branch rows with stream, college type,
-              closing stats, and candidate fields for traceability.
-            </p>
-          </div>
+        <div class="meta">scripts/parse_cutoffs.py · raw/*/Cutoffs/*.pdf</div>
+      </div>
+    </div>
+
+    <p class="group" id="assumptions">Assumptions</p>
+    <div class="tiles">
+      <div class="tile t8x3 c-warn wide-copy">
+        <div>
+          <h2 class="title">What this tool assumes</h2>
+          <p class="body">
+            These are deliberate modeling choices. The shortlist is a planning aid,
+            not an allotment prediction.
+          </p>
+          <ol class="assumptions">
+            <li>
+              <strong>Past closings ≈ chance.</strong>
+              Historical CAP Stage-I closings are a useful signal for next year.
+              Applicant pools, seat matrices, and rules can still change.
+            </li>
+            <li>
+              <strong>Stage-I only.</strong>
+              Later stages / special allotments in the PDFs are ignored for scoring.
+            </li>
+            <li>
+              <strong>Easiest eligible seat per year×round.</strong>
+              Among seats the candidate can claim in that round, the tool keeps the
+              easiest closing (best for the candidate) and scores against that.
+            </li>
+            <li>
+              <strong>Category + OPEN.</strong>
+              Eligible codes = the candidate’s reservation category seats
+              (e.g. DT/VJ → <code>GVJ*</code>) <em>plus</em> OPEN (<code>GOPEN*</code>).
+              Separate EWS / TFWS / PWD / Defence paths are not modeled beyond what
+              those standard category codes already cover.
+            </li>
+            <li>
+              <strong>Gender.</strong>
+              Male → <code>G*</code> seats only. Female → <code>G*</code> and Ladies
+              <code>L*</code> seats.
+            </li>
+            <li>
+              <strong>Home University is not applied.</strong>
+              HU is read from the merit page when present, but H / O / S cutoffs are
+              pooled. Regional home-seat advantage is not enforced yet.
+            </li>
+            <li>
+              <strong>Merit mode uses PCM State General Merit No.</strong>
+              When a Final Merit Status file is provided, matching uses that state
+              general merit number — not category merit, university merit, or All India merit.
+            </li>
+            <li>
+              <strong>Cutoff <code>merit_rank</code> = State General Merit scale.</strong>
+              CAP PDF closing ranks are treated as comparable to the candidate’s
+              State General Merit No (lower rank is better;
+              cleared if <code>candidate ≤ closing</code>).
+            </li>
+            <li>
+              <strong>Percentile fallback.</strong>
+              Scorecard-only runs match on percentile
+              (cleared if <code>candidate ≥ closing %</code>).
+              Difficulty scores always use percentiles so ordering stays comparable.
+            </li>
+            <li>
+              <strong>Fixed time weights.</strong>
+              Years: 2024–25 = 0.50, 2023–24 = 0.30, 2022–23 = 0.20.
+              Rounds: CAP1 = 1.00, CAP2 = 0.75, CAP3 = 0.55.
+            </li>
+            <li>
+              <strong>Bucket thresholds are heuristics.</strong>
+              Safe / moderate / aspirational cutoffs (clear rates, merit gaps,
+              percentile margins, reachability slack) are tuned rules of thumb,
+              not CET Cell policy.
+            </li>
+            <li>
+              <strong>Selected streams only.</strong>
+              Branches outside the five chosen streams (CS/IT, Electronics,
+              Electrical, Mechanical, Civil) are excluded.
+            </li>
+            <li>
+              <strong>Ownership preference.</strong>
+              Within a bucket, fill Government → Government-Aided → University
+              before Private / Un-Aided when those options qualify.
+            </li>
+            <li>
+              <strong>No reputation ranking.</strong>
+              Order is cutoff competitiveness + ownership bias — not NIRF,
+              placements, fees, or location preference (except what cutoffs imply).
+            </li>
+            <li>
+              <strong>Multiple branches from one college are allowed.</strong>
+              The shortlist does not force one row per institute.
+            </li>
+            <li>
+              <strong>Ultra-easy “filler” safes are dropped.</strong>
+              Options far weaker than the candidate are removed so the safe bucket
+              stays useful as real preferences.
+            </li>
+          </ol>
+        </div>
+        <div class="meta">read these before treating the CSV as final preferences</div>
+      </div>
+    </div>
+
+    <p class="group" id="logic">Recommendation logic</p>
+    <div class="tiles">
+      <div class="tile t4x2 c-blue wide-copy">
+        <div>
+          <h2 class="title">How matching works</h2>
+          <p class="body">
+            Per <strong>choice code</strong> (college–branch), each year×round keeps the
+            easiest eligible historical closing. Then: would this candidate have cleared it?
+          </p>
+          <p class="body" style="margin-top:0.55rem">
+            <strong>Merit mode:</strong> State General Merit No vs CAP closing ranks
+            <span class="meta">(lower rank = better; cleared if candidate ≤ closing)</span><br />
+            <strong>Percentile mode:</strong> scorecard fallback
+            <span class="meta">(cleared if candidate ≥ closing %)</span>
+          </p>
+        </div>
+        <div class="meta">primary signal = merit when .mht provided</div>
+      </div>
+
+      <div class="tile t2x2 c-orange">
+        <div>
+          <h2 class="title">Eligible seats</h2>
+          <ul>
+            <li><strong>Category</strong> + OPEN</li>
+            <li>e.g. DT/VJ → GVJ* + GOPEN*</li>
+            <li><strong>Gender:</strong> male G* only; female also L*</li>
+            <li><strong>HU:</strong> not applied (H/O/S pooled)</li>
+          </ul>
+        </div>
+        <div class="meta">filters before scoring</div>
+      </div>
+
+      <div class="tile t2x2 c-slate">
+        <div>
+          <h2 class="title">Difficulty</h2>
+          <div class="codeblock">year:  .50 / .30 / .20
+round: 1.0 / .75 / .55
+
+difficulty =
+  Σ(pct × yw × rw)
+  / Σ(yw × rw)</div>
+        </div>
+        <div class="meta">orders options inside a bucket</div>
+      </div>
+
+      <div class="tile t2x1 c-red">
+        <div>
+          <h2 class="title">Aspirational</h2>
+          <p class="body">Stretch — near history, low clear rate</p>
+        </div>
+        <div class="meta">×30</div>
+      </div>
+
+      <div class="tile t2x1 c-amber">
+        <div>
+          <h2 class="title">Moderate</h2>
+          <p class="body">Realistic — clears a fair share of past rounds</p>
+        </div>
+        <div class="meta">×40</div>
+      </div>
+
+      <div class="tile t2x1 c-green">
+        <div>
+          <h2 class="title">Safe</h2>
+          <p class="body">Comfortable CAP1 clearance + margin</p>
+        </div>
+        <div class="meta">×30</div>
+      </div>
+
+      <div class="tile t2x1 c-steel">
+        <div>
+          <h2 class="title">Shortlist</h2>
+          <p class="body">Govt → Aided → Univ → Private</p>
+        </div>
+        <div class="meta">~100 rows</div>
+      </div>
+    </div>
+
+    <p class="group">Bucket rules</p>
+    <div class="tiles">
+      <div class="tile t4x2 c-indigo wide-copy">
+        <div>
+          <h2 class="title">Merit-mode thresholds</h2>
+          <ul>
+            <li><strong>Safe:</strong> CAP1 clear ≥ 67% and median gap ≥ +3,000</li>
+            <li><strong>Moderate:</strong> clear ≥ 35%, or CAP1 ≥ 33% with gap ≥ −2,000</li>
+            <li><strong>Aspirational:</strong> reachable ≥ 25% and gap ≥ −8,000</li>
+            <li>Gap = closing_merit − candidate_merit (positive = stronger candidate)</li>
+          </ul>
         </div>
       </div>
 
-      <h3>Module roles</h3>
-      <div class="modules">
-        <div class="module">
-          <div class="file">scripts/parse_cutoffs.py</div>
-          <p>PDF text extraction and structural parsing into the cutoff database. Run once per data refresh.</p>
-        </div>
-        <div class="module">
-          <div class="file">scripts/branch_categories.py</div>
-          <p>Branch → stream taxonomy, interactive prompt helpers, and stream token resolution (<code>1,2</code>, <code>cs</code>, <code>all</code>).</p>
-        </div>
-        <div class="module">
-          <div class="file">generate_recommendations.py</div>
-          <p>End-to-end CLI: parse scorecard, load eligible cutoffs, score options, shortlist, write CSV.</p>
-        </div>
-        <div class="module">
-          <div class="file">data/cutoffs_db.csv</div>
-          <p>Shared read-only fact table for all recommendations. Schema: year, round, college, choice, branch, status, category, percentile, …</p>
+      <div class="tile t4x2 c-pink wide-copy">
+        <div>
+          <h2 class="title">Percentile-mode thresholds</h2>
+          <ul>
+            <li><strong>Safe:</strong> CAP1 clear ≥ 67% and median ≤ candidate − 3</li>
+            <li><strong>Moderate:</strong> clear ≥ 35%, or CAP1 ≥ 33% with median ≤ candidate + 2</li>
+            <li><strong>Aspirational:</strong> reachable ≥ 25% and median ≤ candidate + 8</li>
+            <li>Hopeless / ultra-easy filler options are dropped</li>
+          </ul>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section id="how">
-      <h2>How it works</h2>
-
-      <ol class="steps">
-        <li>
-          <h3>Parse the scorecard</h3>
-          <p>
-            Extract category, total percentile, and gender. Gender controls whether
-            Ladies (<code>L*</code>) seats are eligible; males use <code>G*</code> only.
-          </p>
-        </li>
-        <li>
-          <h3>Build the eligible seat set</h3>
-          <p>
-            Reserved candidates match their category codes
-            (e.g. OBC → <code>GOBCH/O/S</code>) <em>and</em> OPEN (<code>GOPEN*</code>).
-            Only Stage-I rows with a percentile are used. Home University is not applied yet —
-            H / O / S seats are pooled and the easiest eligible closing per year–round is kept.
-          </p>
-        </li>
-        <li>
-          <h3>Filter by branch streams</h3>
-          <p>
-            User selects streams (interactive or <code>--streams</code>). Specialized
-            branches outside the five streams are dropped.
-          </p>
-        </li>
-        <li>
-          <h3>Score each college–branch (choice code)</h3>
-          <p>
-            For every year–round observation, take the best (lowest) closing among
-            eligible seats. Weight recent years and earlier CAP rounds more heavily:
-          </p>
-          <div class="formula">
-year:  2024–25 = 0.50 · 2023–24 = 0.30 · 2022–23 = 0.20
-round: CAP1 = 1.00 · CAP2 = 0.75 · CAP3 = 0.55
-
-difficulty = Σ (best_closing × year_w × round_w) / Σ (year_w × round_w)
-          </div>
-          <p style="margin-top:0.75rem">
-            Options with no realistic chance (e.g. easiest closing still &gt; candidate + 3)
-            are discarded.
-          </p>
-        </li>
-        <li>
-          <h3>Assign buckets</h3>
-          <div class="buckets">
-            <article class="bucket asp">
-              <h3>Aspirational</h3>
-              <p>Slim chance — closings usually above the candidate, but history is near enough.</p>
-              <span class="count">Default 30</span>
-            </article>
-            <article class="bucket mod">
-              <h3>Moderate</h3>
-              <p>Borderline — clears a meaningful share of past rounds, or sits near the median band.</p>
-              <span class="count">Default 40</span>
-            </article>
-            <article class="bucket safe">
-              <h3>Safe</h3>
-              <p>Strong clearance, especially on CAP1, with median closing clearly below the candidate.</p>
-              <span class="count">Default 30</span>
-            </article>
-          </div>
-        </li>
-        <li>
-          <h3>Shortlist with ownership preference</h3>
-          <p>
-            Within each bucket, fill Government → Government-Aided → University first,
-            then private / un-aided colleges by difficulty. Multiple branches from the
-            same college are allowed. Total default: <strong>100</strong> rows.
-          </p>
-        </li>
-      </ol>
-
-      <div class="note">
-        Inside a bucket, preferred ownership comes first; among peers of the same type,
-        harder (higher difficulty) options rank higher so the CSV order is close to a
-        usable CAP preference sequence.
+    <p class="group">Run</p>
+    <div class="tiles">
+      <div class="tile t8x2 c-navy wide-copy">
+        <div>
+          <h2 class="title">Command line</h2>
+          <pre>pip install -r requirements.txt
+python scripts/parse_cutoffs.py
+python generate_recommendations.py "candidate.mht" --streams all
+python generate_recommendations.py scorecards/scorecard.pdf --streams 1,2</pre>
+        </div>
+        <div class="meta">flags: --streams · --aspirational/--moderate/--safe · --female/--male · -o</div>
       </div>
 
-      <h3>Branch streams</h3>
-      <table>
-        <thead>
-          <tr><th>#</th><th>Stream</th><th>Includes</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>1</td><td>Computer Science &amp; IT</td><td>Software, Data, AI, Computing</td></tr>
-          <tr><td>2</td><td>Electronics &amp; Communication</td><td>Signals, Embedded, Instrumentation</td></tr>
-          <tr><td>3</td><td>Electrical Engineering</td><td>Power systems, circuits, energy</td></tr>
-          <tr><td>4</td><td>Mechanical Engineering</td><td>Machines, manufacturing, industrial / process</td></tr>
-          <tr><td>5</td><td>Civil Engineering</td><td>Infrastructure, structures, built environment</td></tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section id="layout">
-      <h2>Repository layout</h2>
-      <div class="tree">cap-priority-list/
-├── generate_recommendations.py   # Main CLI
-├── index.html                    # This project description
-├── README.md
-├── requirements.txt
-├── raw/                          # Historical cutoff PDFs
-│   ├── 2022-23/ … 2024-25/
-├── scorecards/                   # Local scorecards (gitignored)
-├── data/
-│   └── cutoffs_db.csv            # Parsed cutoff DB
-├── output/
-│   └── recommendations.csv       # Generated shortlist
-└── scripts/
-    ├── parse_cutoffs.py
-    └── branch_categories.py</div>
-    </section>
-
-    <section id="run">
-      <h2>Run</h2>
-      <p class="muted">Requires Python 3 and <code>pypdf</code>.</p>
-      <pre>pip install -r requirements.txt
-python scripts/parse_cutoffs.py          # once, or after new raw PDFs
-
-python generate_recommendations.py scorecards/scorecard.pdf \
-  --streams all \
-  -o output/recommendations.csv</pre>
-      <p style="margin-top:1rem" class="muted">
-        Useful flags: <code>--streams 1,2</code> / <code>cs,mechanical</code>,
-        <code>--aspirational</code> / <code>--moderate</code> / <code>--safe</code>,
-        <code>--female</code> / <code>--male</code>.
-      </p>
-    </section>
-
-    <section id="limits">
-      <h2>What it does not claim</h2>
-      <div class="limits">
-        <div class="limit">
-          <h3>Not a guarantee</h3>
-          <p>Past closings guide chance. Applicant pools, seats, and rules change yearly.</p>
-        </div>
-        <div class="limit">
-          <h3>No Home University yet</h3>
-          <p>H vs O cutoffs are pooled. HU filtering would tighten regional results.</p>
-        </div>
-        <div class="limit">
-          <h3>No reputation ranking</h3>
-          <p>Order reflects cutoff competitiveness (and ownership preference), not NIRF or placements.</p>
-        </div>
-        <div class="limit">
-          <h3>Percentile-first</h3>
-          <p>Matching uses CET percentile from the scorecard until state merit is available.</p>
+      <div class="tile t2x1 c-orange">
+        <div>
+          <h2 class="title">Not a guarantee</h2>
+          <p class="body">Past closings only — pools change yearly</p>
         </div>
       </div>
-    </section>
+
+      <div class="tile t2x1 c-slate">
+        <div>
+          <h2 class="title">No HU filter</h2>
+          <p class="body">Home University not applied yet</p>
+        </div>
+      </div>
+
+      <div class="tile t2x1 c-cyan">
+        <div>
+          <h2 class="title">No reputation rank</h2>
+          <p class="body">Cutoff strength + ownership bias</p>
+        </div>
+      </div>
+
+      <div class="tile t2x1 c-teal">
+        <div>
+          <h2 class="title">Merit first</h2>
+          <p class="body">.mht State Merit drives clear/bucket</p>
+        </div>
+      </div>
+    </div>
 
     <footer>
-      Maharashtra CAP engineering preference planning · cutoff data from CET Cell PDFs ·
-      logic in <span class="mono">generate_recommendations.py</span> and
-      <span class="mono">scripts/parse_cutoffs.py</span>
+      tiles · self-contained HTML · no external CSS/JS
     </footer>
-  </main>
+  </div>
 </body>
 </html>

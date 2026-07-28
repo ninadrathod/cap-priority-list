@@ -8,13 +8,19 @@ venv/
 # macOS
 .DS_Store
 
-# Generated outputs (keep the processed DB optional — large)
-output/*.csv
+# Candidate inputs — never commit personal data
+input/*
+!input/.gitkeep
+
+# Generated outputs
+output/*
 !output/.gitkeep
 
-# Candidate scorecards — never commit personal data
+# Legacy / alternate local candidate folders
 scorecards/*
 !scorecards/.gitkeep
+*.mht
+*.mhtml
 
 # Scratch
 *.log
