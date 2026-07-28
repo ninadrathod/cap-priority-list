@@ -96,6 +96,32 @@
       margin-bottom: 0;
     }
 
+    .credit {
+      margin: 2.25rem 0 0;
+      text-align: center;
+      font-size: 1.15rem;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 0.01em;
+    }
+
+    .credit a {
+      color: #7dd3fc;
+      font-weight: 600;
+      text-decoration: none;
+      text-shadow: 0 0 10px rgba(125, 211, 252, 0.35);
+    }
+
+    .credit a:hover {
+      color: #fff;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-shadow: 0 0 14px rgba(125, 211, 252, 0.7);
+    }
+
+    .credit .heart {
+      color: #f87171;
+    }
+
     .tile .section {
       font-size: clamp(1.35rem, 3vw, 1.75rem);
       font-weight: 650;
@@ -795,6 +821,11 @@ python generate_recommendations.py scorecards/scorecard.pdf --streams 1,2</pre>
         </div>
       </div>
     </div>
+
+    <p class="credit">
+      Made with <span class="heart" aria-hidden="true">❤</span> by
+      <a href="https://ninad.meverse.in">your's truly</a>
+    </p>
   </div>
 </body>
 </html>
